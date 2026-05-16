@@ -56,8 +56,55 @@ const generateId = (
 
 }
 
+
+
 </script>
 
+<style>
+.card {
+  margin-bottom: 10px;
+}
+
+#task-box {
+  height: 1150px;
+  overflow-y: scroll;
+}
+
+#task-list-card {
+  overflow-y: auto;
+}
+
+.card-logo {
+  height: 30px;
+  width: 30px;
+  margin-right: 10px;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+}
+.task-item {
+  display: flex;
+  flex-direction: column;
+  padding: 5px 5px 5px 5px;
+  border-color: dodgerblue;
+  border-style: solid;
+  border-width: 0;
+}
+
+.task-item:hover {
+  background-color: gainsboro;
+  cursor: pointer;
+}
+
+.task-item-description {
+  color: darkgray;
+  font-size: small;
+}
+
+</style>
 <template>
 
   <el-card
