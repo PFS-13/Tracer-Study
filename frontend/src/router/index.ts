@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import RecommendationView from '../components/recommendation/RecommendationView.vue'
-
+// import RecommendationView from '../components/recommendation/RecommendationView.vue'
+import App from '../App.vue'
 const routes = [
   {
     path: '/',
-    component: RecommendationView
+    component: App
   }
 ]
 

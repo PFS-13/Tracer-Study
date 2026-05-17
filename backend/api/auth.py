@@ -16,39 +16,22 @@ from schemas.auth_schemas import (
     TokenResponse
 )
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"]
-)
+router = APIRouter( prefix="/auth",tags=["Authentication"])
 
 
 @router.post("/register")
-def register(
-    data: RegisterRequest,
-    db: Session = Depends(get_db)
-):
-
-    user = register_user(
-        db,
-        data.email,
-        data.password
-    )
+def register(data: RegisterRequest,db: Session = Depends(get_db)):
+    user = register_user(db,data.email,data.password)
 
     if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
+        raise HTTPException(status_code=400,detail="Email sudah terdaftar"
         )
-
     return {
         "message": "Register success"
     }
 
 
-@router.post(
-    "/login",
-    response_model=TokenResponse
-)
+@router.post("/login",response_model=TokenResponse)
 def login(
     data: LoginRequest,
     db: Session = Depends(get_db)
