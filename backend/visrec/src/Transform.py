@@ -145,8 +145,6 @@ def Cql2Asp(spec: dict):
     print('\n'.join(facts))
     return facts
 
-
-
 def Asp2Vl(asp: list, task=None):
     Vl = {"$schema": "https://vega.github.io/schema/vega-lite/v5.json",
     "title":{"text":"","anchor":"start"}}

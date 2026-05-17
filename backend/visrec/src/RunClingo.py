@@ -12,12 +12,12 @@ import tempfile
 import json
 from time import time
 import threading
-
+from pathlib import Path
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 file_cache: Dict[str, bytes] = {}
-
-DRACO_LP_DIR = './visrec/asps'
+BASE_DIR = Path(__file__).resolve().parent.parent
+DRACO_LP_DIR = BASE_DIR / 'asps'
 DRACO_LP = [
     "define.lp",
     "generate.lp",

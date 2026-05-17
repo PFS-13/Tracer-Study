@@ -3,56 +3,45 @@
 % === Within Encodings ===
 
 % @constraint Primitive type has to support data type.
-% DILARANG: field bertipe string / boolean diperlakukan sebagai quantitative
 :- type(E,quantitative), field(E,F), fieldtype(F,(string;boolean)).
-% temporal harus bersifat datetime
 :- type(E,temporal), field(E,F), not fieldtype(F,datetime).
 
 % @constraint Can only bin quantitative or ordinal.
-% Binning hanya boleh untuk: quantitative dan ordinal
 :- type(E,T), bin(E,_), T != quantitative, T != ordinal.
 
 % @constraint Cannot bin and aggregate.
-% bin dan aggregate tidak boleh sama
 :- bin(E,_), aggregate(E,_).
 
-% @constraint Count has to be quantitative.
-
+% @constraint Count has to be quantitative and not use a field.
 % :- aggregate(E,count), field(E,_).
 :- aggregate(E,count), not type(E,quantitative).
-
-% aggregate gak boleh ditaruh di sumbu x
 :- aggregate(E,_), channel(E,x).
 
-% shape hanya boleh digunakan untuk nominal.
+% @constraint Shape requires discrete and not ordered (nominal). Using ordinal would't make a difference in Vega-Lite.
 :- channel(E,shape), not type(E,nominal).
 
 % === Across encodings and between encodings and marks ===
 
 % @constraint Cannot use single channels twice.
-
 :- single_channel(C), 3 { channel(_,C) }10.
 
 % @constraint There has to be at least one encoding. Otherwise, the visualization doesn't show anything.
 :- not encoding(_).
 
 % @constraint All encodings (if they have a channel) require field except if we have a count aggregate.
-% setiap encoding HARUS punya: field ATAU aggregate(count)
 :- not field(E,_), not aggregate(E,count), encoding(E).
 
 % @constraint Count should not have a field. Having a field doesn't make a difference.
-% Count mah gak butuh field
 :- aggregate(E,count), field(E,_).
 
 % @constraint Point, tick, and bar require x or y channel.
-:- mark(point;bar), not channel(_,x).
-:- mark(point;bar), not channel(_,y).
+:- mark(point;bar), not channel(_,x), not channel(_,y).
+
 % @constraint Line and area require x and y channel.
-:- mark(line;area), not channel(_,x).
-:- mark(line;area), not channel(_,y).
+:- mark(line;area), not channel(_,(x;y)).
+
 % @constraint Line and area cannot have two discrete.
 :- mark(line;area), channel_discrete(x), channel_discrete(y).
-
 
 % @constraint Bar and tick cannot have both x and y continuous.
 :- mark(bar), channel_continuous(x), channel_continuous(y).
@@ -60,7 +49,7 @@
 % @constraint Bar, tick, line, area require some continuous variable on x or y.
 :- mark(bar;area;line), not channel_continuous(x), not channel_continuous(y).
 
-% Channel shape perlu kontrak poin
+% @constraint Shape channel requires point mark.
 :- channel(_,shape), not mark(point).
 
 % @constraint Size only works with some marks. Vega-Lite can also size lines, and ticks but that would violate best practices.
@@ -69,7 +58,7 @@
 % @constraint Rect mark needs discrete x and y.
 :- mark(rect), not is_d_d.
 
-% idak boleh ada SATU field yang dipakai 2 kali atau lebih pada channel x dan y.
+% @constraint Don't use the same field on x and y.
 :- { field(E,F) : channel(E,x); field(E,F) : channel(E,y) } >= 2, field(F).
 
 % @constraint Don't use count on x and y.
@@ -90,11 +79,11 @@
 :- mark(rect), overlap.
 
 % == Stacking ==
+
 % @constraint Only use stacking for bar and area.
 :- stack(_), not mark(bar), not mark(area).
 
 % @constraint Don't stack if aggregation is not summative (summative are count, sum, distinct, valid, missing).
-% summative_aggregate_op(count;sum).
 :- stack(E,_), aggregate(E,A), not summative_aggregate_op(A).
 
 % @constraint Need to stack if we use bar, area with discrete color.
@@ -106,7 +95,7 @@
 % @constraint Stack can only be on x or y.
 :- stack(E,_), not channel(E,x), not channel(E,y).
 
-% Jika visualisasi menggunakan stacking, maka field continuous pada non-positional channel HARUS berupa aggregate.
+% @constraint Cannot use non positional continuous with stack unless it's aggregated.
 :- stack(_), non_positional(C), channel(E,C), not aggregate(E,_), continuous(E).
 
 % @constraint Vega-Lite currently supports 8 shapes/sizes.
@@ -116,6 +105,7 @@
 :- channel(E,color), discrete(E), enc_cardinality(E,C), C > 20.
 
 % === Type checks ===
+
 % @constraint Check mark.
 :- mark(M), not marktype(M).
 
@@ -144,7 +134,6 @@
 
 % Add new
 % @constraint channel type consistency.
-% Satu field tidak boleh memiliki type berbeda pada visualisasi yang sama, kecuali hasil binning.
 :- channel(N,C),field(N,F), field(E,F), type(N,T),not bin(E,_),not type(E,T).
 
 
@@ -154,7 +143,7 @@
 % @constraint can not bin the same var both in x/y and c/s/s.
 :- bin(N,_),bin(E,_),field(N,F),field(E,F),channel(N,(color;size;shape)).
 
-% Visualisasi harus memiliki channel X.
+% @constraint against without x channel
 :- not channel(_,x).
 
 % @constraint datatime type against c/s/s.
@@ -162,11 +151,10 @@
 
 % @constraint pie mark.
 :- mark(arc), channel(_,x),not channel(_,y).
-:- mark(arc), channel(_,(size;shape)).
+:- mark(arc), channel(_,(color;size;shape)).
 :- mark(arc), is_c_c.
-:- mark(arc), not is_d.
 
-% @constraintShape, size, atau color tidak boleh digunakan jika jumlah kategorinya kurang dari 2
+% @constraint channel should not have only one cardinality.
 :- channel(E,(shape;size;color)), discrete_cardinality(E,C), C < 2.
 % :- channel(E,_), discrete_cardinality(E,C), C < 2.
 
@@ -184,8 +172,9 @@
 :- channel(N1,x),channel(N2,(shape;size;color)),N1>N2,encode(N1),encode(N2).
 :- channel(N1,color),channel(N2,size),N1>N2,encode(N1),encode(N2).
 :- channel(N1,size),channel(N2,shape),N1>N2,encode(N1),encode(N2).
+:- channel(N1,size),channel(N2,shape),N1>N2,encode(N1),encode(N2).
 
-% @constraint jangan encode field yang sama ke terlalu banyak visual channels berbeda.
+% @constraint c/s/s combination.
 :- channel(E1,(shape;color)),channel(E2,size),field(E1,F),field(E2,F).
 % :- channel(E1,shape),channel(E2,size),field(E1,F),field(E2,F).
 % :- channel(E1,color),channel(E2,size),field(E1,F),field(E2,F).
@@ -197,45 +186,40 @@
 :- mark(arc),channel(E1,x),channel(E2,y),field(E1,F1),field(E2,F2),F1!=F2.
 
 % % @constraint stack against count(y).
-% :- channel(E,y),aggregate(E,count),stack(E,_).
+:- channel(E,y),aggregate(E,count),stack(E,_).
 
-% % @constraint stack harus ada warna
+% % @constraint stack .
 :- stack(_,_),not channel(_,color).
 
-% Line area
 % % @constraint mark line against discrete var.
 :- channel(E,x),mark((line;area)),discrete(E).
 
 % @constraint continuous x against aggregate y.
-% Jika X bertipe quantitative dan Y menggunakan aggregate, maka X harus dibinning
 :- channel(E1,x),channel(E2,y),type(E1,quantitative),aggregate(E2,_),not bin(E1,_).
 
-% Jika Y menggunakan aggregate, maka encoding pada shape/size/color harus bertipe nominal.
+% @constraint aggregate var against css.
 :- channel(E1,(shape;size;color)),channel(E2,y),aggregate(E2,_),not type(E1,nominal).
 
-% Jika shape atau size menggunakan aggregate, maka visualisasi harus bertipe discrete-discrete
+% @constraint Non-d_d against aggregate c/s.
 % :- channel(E1,(shape;size;color)),aggregate(E1,_), is_c_c,not mark(point).
 :- channel(E1,(shape;size)),aggregate(E1,_),not is_d_d.
 
-% @constraint Field discrete tidak boleh menggunakan aggregate sum/mean pada shape/size/color.
-:- channel(E,(shape;size;color)),aggregate(E,(sum;mean)),discrete(E).
+% @constraint discrete c/s/s against sum/mean.
+:- channel(E1,(shape;size;color)),aggregate(E,(sum;mean)),discrete(E).
 
 % @constraint x/y field consistence.
 :- channel(E1,_),channel(E2,_),field(E1,F),field(E2,F),obj_id(E2),encode(E1),bin(E2,_).
-% :- field(E1,F),field(E2,F),E1 != E2,bin(E2,_).
 :- channel(E1,x),channel(E2,x),field(E1,F1),field(E2,F2),F1!=F2.
 :- channel(E1,y),channel(E2,y),field(E1,F1),field(E2,F2),F1!=F2.
 
 % @constraint is_d_d against no css.
-% jika diskrete x diskrete maka harus pake c/s/s
 :- is_d_d,not channel(_,shape),not channel(_,size),not channel(_,color).
 
 % @constraint c/s/s must have the same field with x/y in rect.
-% :- channel(E1,(shape;size;color)),field(E1,F1),channel(E2,x),field(E2,F2),channel(E3,y),field(E3,F3),F1!=F2,F1!=F3, mark(rect).
-:- mark(rect),channel(E,(shape;size)).
-:- mark(rect), channel(E,color), not aggregate(E,_).
+:- channel(E1,(shape;size;color)),field(E1,F1),channel(E2,x),field(E2,F2),channel(E3,y),field(E3,F3),F1!=F2,F1!=F3, mark(rect).
+
 % @constraint mark arc can not have high cardinality.
-:- mark(arc),channel(E,(x;y)), discrete_cardinality(E,C), C >10.
+:- mark(arc),channel(E,(x;y)), discrete_cardinality(E,C), C >20.
 
 % @constraint temporal against boxplot.
 :- mark(boxplot),channel(E,(x;y)), type(E,temporal).

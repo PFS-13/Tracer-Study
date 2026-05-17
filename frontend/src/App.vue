@@ -279,7 +279,7 @@ export default {
           props['encoding']['x']['axis'] = {}
         }
         props['encoding']['x']['axis']['labelAngle'] = -45
-
+        console.log("haha", props)
         return props
       },
       set_dialog_chart_config (props) {

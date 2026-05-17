@@ -135,13 +135,6 @@ def IndivRecWithSingleTask(Data, ColumnTypes={}, task=None,DataAsp=None, Num=10)
     result = run(draco_query=program, num=Num)
 
     
-
-    # Example of result
-    #...
-    # {'props': ['data("./values").', 'field(e0,"Happiness Rank").', 
-    #            'field(e1,"Happiness Score").', 'type(e0,quantitative).', 'type(e1,quantitative).', 'channel(e1,x).', 'channel(5,y).', 'bin(e1,10).',
-    #            'aggregate(5,count).', 'type(5,quantitative).', 'mark(bar).'], 'cost': 0, 'Ops': [], 'fields': [], 'count': 0, 'task': set(), 'svg': []}
-
     if result is None:
         return None
 
@@ -186,85 +179,85 @@ def Result2Json(res_):
 #     return RecommendationCombination(Data=Data, ColumnTypes=ColumnTypes, Num=Num,DataAsp=DataAsp, task_list=None)
 
 
-# def IndivRecWithMultiTasks(Data, ColumnTypes={}, task=[],DataAsp=None, Num=10,mode=2):
-#     if len(task) == 0:
-#         return RecommendationCombination(Data=Data, ColumnTypes=ColumnTypes, Num=Num,DataAsp=DataAsp, task_list=None,mode=mode)
-#     else:
-#         return RecommendationCombination(Data=Data, ColumnTypes=ColumnTypes, Num=Num,DataAsp=DataAsp, task_list=task,mode=mode)
+def IndivRecWithMultiTasks(Data, ColumnTypes={}, task=[],DataAsp=None, Num=10,mode=2):
+    if len(task) == 0:
+        return RecommendationCombination(Data=Data, ColumnTypes=ColumnTypes, Num=Num,DataAsp=DataAsp, task_list=None,mode=mode)
+    else:
+        return RecommendationCombination(Data=Data, ColumnTypes=ColumnTypes, Num=Num,DataAsp=DataAsp, task_list=task,mode=mode)
 
 
-# def RecommendationCombination(Data, ColumnTypes={},DataAsp=None,Num=10, task_list=None,mode=2):
-#     global Recos_dedup
-#     final_res={}
-#     Recos_dedup = []
-#     Recos_nodedup={}
-#     tasklist = tasks if task_list is None else task_list
-#     def process(start, end):
-#         for i in range(start, end):
-#             if not tasklist[i] in tasks:
-#                 raise Exception(print("No %s Task!" % (tasklist[i])))
-#             Recos = IndivRecWithSingleTask(Data=Data, ColumnTypes=ColumnTypes,DataAsp=DataAsp, task=tasklist[i], Num=0)
-#             if not Recos is None:
-#                 if mode==2:
-#                     res_with_rank={}
-#                     res_with_rank['R1']=Result2Json(Recos)
-#                     try:
-#                         res_with_rank['R2']=Result2Json(rank(Recos,2,ColumnTypes))
-#                     except:
-#                         res_with_rank['R2']=Result2Json(list(reversed(Recos)))
-#                     res_with_rank['R3']=Result2Json(rank(Recos,3,ColumnTypes))
-#                     res_with_rank['R4']=Result2Json(Recos)
-#                     Recos_nodedup[tasklist[i]]=res_with_rank
+def RecommendationCombination(Data, ColumnTypes={},DataAsp=None,Num=10, task_list=None,mode=2):
+    global Recos_dedup
+    final_res={}
+    Recos_dedup = []
+    Recos_nodedup={}
+    tasklist = tasks if task_list is None else task_list
+    def process(start, end):
+        for i in range(start, end):
+            if not tasklist[i] in tasks:
+                raise Exception(print("No %s Task!" % (tasklist[i])))
+            Recos = IndivRecWithSingleTask(Data=Data, ColumnTypes=ColumnTypes,DataAsp=DataAsp, task=tasklist[i], Num=0)
+            if not Recos is None:
+                if mode==2:
+                    res_with_rank={}
+                    res_with_rank['R1']=Result2Json(Recos)
+                    try:
+                        res_with_rank['R2']=Result2Json(rank(Recos,2,ColumnTypes))
+                    except:
+                        res_with_rank['R2']=Result2Json(list(reversed(Recos)))
+                    res_with_rank['R3']=Result2Json(rank(Recos,3,ColumnTypes))
+                    res_with_rank['R4']=Result2Json(Recos)
+                    Recos_nodedup[tasklist[i]]=res_with_rank
 
-#                 for res in Recos:
-#                     lock.acquire()\
+                for res in Recos:
+                    lock.acquire()\
 
 
-#                     if res not in Recos_dedup:
-#                         res.count = 1
-#                         res.task.add(tasklist[i])
-#                         Recos_dedup.append(res)
-#                     else:
-#                         Recos_dedup[Recos_dedup.index(res)].count += 1
-#                         Recos_dedup[Recos_dedup.index(res)].cost += res.cost
-#                         Recos_dedup[Recos_dedup.index(res)].task.add(tasklist[i])
-#                     lock.release()
-#     n = 8
-#     start = end = 0
-#     threads = []
-#     for i in range(n):
-#         start = end
-#         end = int((i+1)/n*len(tasklist))
-#         th = Thread(target=process, args=(start, end))
-#         threads.append(th)
-#         th.start()
-#     for t in threads:
-#         t.join()
+                    if res not in Recos_dedup:
+                        res.count = 1
+                        res.task.add(tasklist[i])
+                        Recos_dedup.append(res)
+                    else:
+                        Recos_dedup[Recos_dedup.index(res)].count += 1
+                        Recos_dedup[Recos_dedup.index(res)].cost += res.cost
+                        Recos_dedup[Recos_dedup.index(res)].task.add(tasklist[i])
+                    lock.release()
+    n = 8
+    start = end = 0
+    threads = []
+    for i in range(n):
+        start = end
+        end = int((i+1)/n*len(tasklist))
+        th = Thread(target=process, args=(start, end))
+        threads.append(th)
+        th.start()
+    for t in threads:
+        t.join()
 
-#     for item in Recos_dedup:
-#         item.cost /= item.count
-#     Recos_dedup.sort()
+    for item in Recos_dedup:
+        item.cost /= item.count
+    Recos_dedup.sort()
 
-#     if mode==2:
-#         res_with_rank2={}
-#         res_with_rank2['R1']=Result2Json(rank(Recos_dedup,1,ColumnTypes))
-#         try:
-#             res_with_rank2['R2']=Result2Json(rank(Recos_dedup,2,ColumnTypes))
-#         except:
-#             res_with_rank2['R2']=Result2Json(list(reversed(rank(Recos_dedup,1,ColumnTypes))))
-#         res_with_rank2['R3']=Result2Json(rank(Recos_dedup,3,ColumnTypes))
-#         res_with_rank2['R4']=Result2Json(rank(Recos_dedup,4,ColumnTypes))
+    if mode==2:
+        res_with_rank2={}
+        res_with_rank2['R1']=Result2Json(rank(Recos_dedup,1,ColumnTypes))
+        try:
+            res_with_rank2['R2']=Result2Json(rank(Recos_dedup,2,ColumnTypes))
+        except:
+            res_with_rank2['R2']=Result2Json(list(reversed(rank(Recos_dedup,1,ColumnTypes))))
+        res_with_rank2['R3']=Result2Json(rank(Recos_dedup,3,ColumnTypes))
+        res_with_rank2['R4']=Result2Json(rank(Recos_dedup,4,ColumnTypes))
     
-#         final_res['Recos_dedup']=res_with_rank2
-#         final_res['Recos_nodedup']=Recos_nodedup
-#         return final_res
-#     else:
-#         if Num == 0:
-#             Num = len(Recos_dedup)
-#         elif Num > len(Recos_dedup):
-#             Num = len(Recos_dedup)
-#         # PrintVegaLite(Recos_dedup[0:Num])
-#         return Recos_dedup[0:Num]
+        final_res['Recos_dedup']=res_with_rank2
+        final_res['Recos_nodedup']=Recos_nodedup
+        return final_res
+    else:
+        if Num == 0:
+            Num = len(Recos_dedup)
+        elif Num > len(Recos_dedup):
+            Num = len(Recos_dedup)
+        # PrintVegaLite(Recos_dedup[0:Num])
+        return Recos_dedup[0:Num]
 
 
 '''Combination Recommendation'''
@@ -331,15 +324,14 @@ def TaskVisAPIs(Data, ColumnTypes: List[dict] = [], task=None,DataAsp=None, Num=
     else:
         for item in ColumnTypes:
             ColumnDict[item['field']] = item['type']
-    print("ColumnDik ===", ColumnDict)
-    selected_columns = list(ColumnDict.keys())
-    filtered_df = Data[selected_columns]
+    Data = Data[list(ColumnDict.keys())]
+    ColumnDict=GetNewColumnType(Data,ColumnDict)
     # mode 1:Individual recommendation with single task
-    task = "Comparison"
-    if mode == 1:
-        if type(task) !=str:
+    # task = "Comparison"
+    if mode == 2:
+        if type(task) !=list:
             raise Exception(print("Must input single task string in SingleTask mode!"))
-        recos= IndivRecWithSingleTask(Data=filtered_df, ColumnTypes=ColumnDict, task=task,DataAsp=DataAsp, Num=0)
+        recos= IndivRecWithMultiTasks(Data=Data, ColumnTypes=ColumnDict, task=task,DataAsp=DataAsp, Num=0)
     # mode 2:Individual recommendation with multiple tasks
     # elif mode == 2:
     #     if type(task) !=list:
@@ -365,4 +357,5 @@ def TaskVisAPIs(Data, ColumnTypes: List[dict] = [], task=None,DataAsp=None, Num=
         raise Exception(print("No %s Mode!" % (mode)))
     df = Data.where((pd.notnull(Data)), None)
     df = list(df.T.to_dict().values())
+    # print("data akhir :", df)
     return recos,df

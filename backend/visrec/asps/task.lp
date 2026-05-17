@@ -1,9 +1,24 @@
 % === Task - marktype correlations ===
+:- task(retrieve_value), not mark(rect).
+:- task(filter), not mark(rect), not mark(bar), not mark(arc).
+:- task(compute_derived_value), not mark(rect), not mark(arc), not mark(bar).
+:- task(find_extremum), not mark(bar),not mark(point).
+:- task(sort), not mark(bar).
+:- task(determine_range), not mark(tick),not mark(boxplot).
+:- task(characterize_distribution), not mark(bar), not mark(point).
+:- task(find_anomalies), not mark(bar), not mark(point).
+:- task(cluster), not mark(bar), not mark(point).
 :- task(correlate), not mark(bar), not mark(line), not mark(point).         
 :- task(part_to_whole), not mark(arc).
 :- task(change_over_time), not mark(line), not mark(area).
+:- task(magnitude), not mark(arc), not mark(bar).
 :- task(comparison), not mark(line),not mark(point),not mark(bar).
+% :- task(spatial), not mark(circle).
+:- task(spatial), not mark(geoshape),not mark(circle).
+:- task(deviation), not mark(bar), not mark(point).
 :- task(trend), not mark(point).
+% :- task(bi_variate), not mark(line).
+:- task(error_range), not mark(errorband), not mark(errorbar).
 % @end
 
 % task comprehensive
@@ -29,6 +44,24 @@
 % @constraint should not display d_d in FE task.
 :- task(find_extremum),is_d_d.
 
+% task(compute_derived_value)--------
+% @constraint must have bin/aggregate.
+:- {aggregate(_,A): aggregate_op(A)}=0,{ bin(_,_)}=0, task(compute_derived_value).
+
+% task(determine_range)--------
+% @constraint can not have y.
+% :- channel(_,y), task(determine_range).
+% @constraint channel y(x) must be discrete(continuous).
+:- channel_continuous(y), task(determine_range).
+:- channel_discrete(x), task(determine_range).
+% @constraint allow to use continuous on x, discrete on y.
+:- channel_continuous(x), channel_discrete(y),not task(determine_range).
+
+
+% task(characterize_distribution)--------
+% @constraint only support count aggregate.
+:- task(characterize_distribution),aggregate(_,_),not aggregate(_,count).
+
 % task(find_anomalies)--------
 % @constraint only support count aggregate.
 :- task(find_anomalies),aggregate(_,_),not aggregate(_,count).
@@ -46,6 +79,10 @@
 :- channel(E,(shape;size;color)),type(E,quantitative),task(comparison).
 % @constraint against shape channel.
 :- channel(_,shape),task(comparison).
+
+% task(deviation)--------
+% @constraint cardinality of x must equal num_rows.
+% :- channel(E,x), enc_cardinality(E,C),not num_rows(C), task(deviation).
 
 % task(sort)--------
 % @constraint only sort task can sort.
