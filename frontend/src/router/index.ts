@@ -4,7 +4,7 @@ import RecommendationView from '../components/recommendation/RecommendationView.
 
 const routes = [
   {
-    path: '/login',
+    path: '/',
     component: RecommendationView
   }
 ]

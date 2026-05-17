@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
 import { ref } from 'vue'
+import api from '../../services/api'
 
 interface DatasetOption {
   label: string
@@ -23,27 +24,11 @@ const datasetOptions = ref<DatasetOption[]>([
   {
     label: 'Tracer Study',
     value: 'tracer'
-  },
-  {
-    label: 'Graduate Survey',
-    value: 'graduate'
   }
 ])
 
-const dataList = ref<DataItem[]>([
-  {
-    field: 'Salary',
-    type: 'quantitative'
-  },
-  {
-    field: 'Gender',
-    type: 'nominal'
-  },
-  {
-    field: 'Study Program',
-    type: 'nominal'
-  }
-])
+const dataList = ref<DataItem[]>([])
+
 
 const dataType: Record<string, string> = {
   quantitative: 'Q',
@@ -54,14 +39,45 @@ const dataType: Record<string, string> = {
 
 
 
-const chooseDataset = (
+const chooseDataset = async (
   value: string
 ) => {
 
   datasetValue.value = value
 
-  console.log('Dataset:', value)
+  console.log('select dataset ' + value)
 
+  try {
+
+    const response = await api.get(
+      '/api/columns',
+      {
+        params: {
+          dataset: value
+        }
+      }
+    )
+
+    if (
+      typeof response.data[0]?.length
+      === 'number'
+    ) {
+
+      dataList.value = response.data[0]
+
+    } else {
+
+      dataList.value = response.data
+
+    }
+
+    console.log(dataList.value)
+
+  } catch (error) {
+
+    console.error(error)
+
+  }
 }
 
 const chooseDataItem = (
@@ -160,5 +176,20 @@ const generateId = (
     </div>
 
   </el-card>
+
+  <style>
+
+.card-logo {
+  height: 30px;
+  width: 30px;
+  margin-right: 10px;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+}
+  </style>
 
 </template>

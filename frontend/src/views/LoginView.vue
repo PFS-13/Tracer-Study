@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue"
-import api from "../api"
+import api from "../services/api"
 
 const email = ref("")
 const password = ref("")
